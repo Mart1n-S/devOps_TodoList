@@ -1,0 +1,32 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: todolist-template
+  namespace: giveaway
+spec:
+  params:
+    - name: repo-url
+    - name: revision
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        generateName: todolist-pipeline-run-
+        namespace: giveaway
+      spec:
+        pipelineRef:
+          name: todolist-pipeline
+        params:
+          - name: repo-url
+            value: $(tt.params.repo-url)
+          - name: image-name
+            value: docker.io/thysmadev/todolist-app:latest
+        workspaces:
+          - name: shared-data
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 1Gi
