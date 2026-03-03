@@ -7,7 +7,9 @@ const { body, validationResult } = require('express-validator');
 const app = express();
 
 // Headers HTTP sécurisés (cache, XSS, etc.)
-app.use(helmet());
+app.use(helmet({
+  strictTransportSecurity: false
+}));
 
 // Limite de requêtes (anti brute-force / DDoS)
 const limiter = rateLimit({
