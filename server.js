@@ -8,7 +8,18 @@ const app = express();
 
 // Headers HTTP sécurisés (cache, XSS, etc.)
 app.use(helmet({
-  strictTransportSecurity: false
+  strictTransportSecurity: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"],
+      upgradeInsecureRequests: null
+    }
+  },
+  crossOriginOpenerPolicy: false,
+  originAgentCluster: false
 }));
 
 // Limite de requêtes (anti brute-force / DDoS)
