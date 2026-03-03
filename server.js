@@ -31,7 +31,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 app.use(express.json({ limit: '10kb' })); // Limite la taille du body
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
