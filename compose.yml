@@ -1,0 +1,23 @@
+services:
+  api:
+    build: .
+    container_name: todolist-api
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7.0
+    container_name: todolist-db
+    env_file:
+      - .env 
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
