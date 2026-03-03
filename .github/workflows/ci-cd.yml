@@ -1,0 +1,52 @@
+name: CI/CD TodoList
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─── CI : Vérification du code ───
+  ci:
+    name: Tests & Vérifications
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone le repo
+        uses: actions/checkout@v4
+
+      - name: Installation Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Installation des dépendances
+        run: npm ci
+
+      - name: Audit sécurité
+        run: npm audit --audit-level=high
+
+  # ─── CD : Build & Push Docker ───
+  cd:
+    name: Build & Push Docker
+    runs-on: ubuntu-latest
+    needs: ci  # ← attend que CI soit vert
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Clone le repo
+        uses: actions/checkout@v4
+
+      - name: Login DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build & Push image
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: thysmadev/todolist-app:latest
