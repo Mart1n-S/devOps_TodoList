@@ -1,6 +1,5 @@
 # Image de base alpine
-# FROM node:25-alpine3.22
-FROM node:20-alpine
+FROM node:25-alpine3.22
 
 # Définition du dossier de travail dans le conteneur
 WORKDIR /usr/src/app
@@ -9,8 +8,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Installation stricte pour la production
-# RUN npm ci --only=production
-RUN npm install --omit=dev
+RUN npm ci --only=production
 
 # Copie du reste du code de l'application
 COPY . .

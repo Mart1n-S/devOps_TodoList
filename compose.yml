@@ -9,15 +9,23 @@ services:
     depends_on:
       - mongodb
     restart: unless-stopped
+    networks:
+      - internal
 
   mongodb:
     image: mongo:7.0
     container_name: todolist-db
     env_file:
-      - .env 
+      - .env
     volumes:
       - mongo_data:/data/db
     restart: unless-stopped
+    networks:
+      - internal
 
 volumes:
   mongo_data:
+
+networks:
+  internal:
+    driver: bridge

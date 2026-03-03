@@ -68,43 +68,12 @@
         <h1>Ma To-Do List</h1>
         <div style="display: flex; gap: 10px;">
             <input type="text" id="taskInput" placeholder="Nouvelle tâche...">
-            <button onclick="addTask()">Ajouter</button>
+            <button id="addBtn">Ajouter</button>
         </div>
         <ul id="taskList"></ul>
     </div>
 
-    <script>
-        // Charger les tâches depuis notre API
-        async function fetchTasks() {
-            const response = await fetch('/tasks');
-            const tasks = await response.json();
-            const list = document.getElementById('taskList');
-            list.innerHTML = '';
-            tasks.forEach(task => {
-                const li = document.createElement('li');
-                li.textContent = task.title;
-                list.appendChild(li);
-            });
-        }
-
-        // Envoyer une nouvelle tâche à l'API
-        async function addTask() {
-            const input = document.getElementById('taskInput');
-            if (!input.value) return;
-
-            await fetch('/tasks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: input.value })
-            });
-
-            input.value = ''; // Vider le champ
-            fetchTasks(); // Recharger la liste
-        }
-
-        // Charger les tâches au démarrage de la page
-        fetchTasks();
-    </script>
+    <script src="app.js"></script>
 </body>
 
 </html>
