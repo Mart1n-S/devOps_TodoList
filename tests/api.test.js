@@ -1,23 +1,18 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
 const app = require('../server');
 
-let mongoServer;
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/testdb';
 
-// Avant tous les tests -> démarre une fausse MongoDB en mémoire
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  await mongoose.connect(mongoServer.getUri());
+  await mongoose.connect(MONGO_URI);
 });
 
-// Après tous les tests -> ferme la connexion
 afterAll(async () => {
+  await mongoose.connection.dropDatabase();
   await mongoose.disconnect();
-  await mongoServer.stop();
 });
 
-// Vide la collection entre chaque test
 afterEach(async () => {
   await mongoose.connection.collection('tasks').deleteMany({});
 });
