@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todolist-api
+  namespace: giveaway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todolist-api
+  template:
+    metadata:
+      labels:
+        app: todolist-api
+    spec:
+      containers:
+        - name: api
+          image: docker.io/thysmadev/todolist-app:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: MONGO_URI
+              value: "mongodb://user:password@mongodb:27017/todoapp?authSource=admin"
+          imagePullPolicy: Always

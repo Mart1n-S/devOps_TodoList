@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: todolist-entrypoint
+  namespace: giveaway
+spec:
+  selector:
+    app: todolist-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+      nodePort: 32690
+  type: LoadBalancer
