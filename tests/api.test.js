@@ -111,3 +111,34 @@ describe('Sécurité', () => {
     expect(res.headers['x-frame-options']).toBe('SAMEORIGIN');
   });
 });
+
+// Tests DELETE /tasks/:id
+describe('DELETE /tasks/:id', () => {
+  it('supprime une tâche existante', async () => {
+    const created = await request(app)
+      .post('/tasks')
+      .send({ title: 'Tâche à supprimer' });
+
+    const res = await request(app)
+      .delete(`/tasks/${created.body._id}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toBe('Tâche supprimée');
+  });
+
+  it('retourne 400 pour un ID invalide', async () => {
+    const res = await request(app)
+      .delete('/tasks/invalid-id');
+
+    expect(res.status).toBe(400);
+    expect(res.body.errors[0].msg).toBe('ID invalide');
+  });
+
+  it('retourne 404 si la tâche n\'existe pas', async () => {
+    const res = await request(app)
+      .delete('/tasks/507f1f77bcf86cd799439011');
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Tâche introuvable');
+  });
+});

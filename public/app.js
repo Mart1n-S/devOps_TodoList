@@ -5,7 +5,18 @@ async function fetchTasks() {
     list.innerHTML = '';
     tasks.forEach(task => {
         const li = document.createElement('li');
-        li.textContent = task.title;
+
+        const span = document.createElement('span');
+        span.textContent = task.title;
+
+        const btn = document.createElement('button');
+        btn.textContent = '🗑️';
+        btn.style.background = '#dc3545';
+        btn.style.padding = '5px 10px';
+        btn.addEventListener('click', () => deleteTask(task._id));
+
+        li.appendChild(span);
+        li.appendChild(btn);
         list.appendChild(li);
     });
 }
@@ -21,6 +32,13 @@ async function addTask() {
     });
 
     input.value = '';
+    fetchTasks();
+}
+
+async function deleteTask(id) {
+    await fetch(`/tasks/${id}`, {
+        method: 'DELETE'
+    });
     fetchTasks();
 }
 
