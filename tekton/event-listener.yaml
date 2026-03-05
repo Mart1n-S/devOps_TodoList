@@ -2,7 +2,7 @@ apiVersion: triggers.tekton.dev/v1beta1
 kind: EventListener
 metadata:
   name: todolist-listener
-  namespace: giveaway
+  namespace: giveaway-ci
 spec:
   serviceAccountName: tekton-triggers-sa
   triggers:

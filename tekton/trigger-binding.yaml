@@ -2,7 +2,7 @@ apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerBinding
 metadata:
   name: todolist-binding
-  namespace: giveaway
+  namespace: giveaway-ci
 spec:
   params:
     - name: repo-url
