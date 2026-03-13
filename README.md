@@ -96,9 +96,11 @@ Applique les manifestes Kubernetes (Infrastructure as Code) dans le namespace `g
 
 | Task | Type | Description |
 |---|---|---|
-| `git-clone` | ClusterTask | Clone du dépôt Git |
-| `sonar-scan` | Custom Task | Analyse SonarQube |
-| `kaniko` | Custom Task | Build et push d'image Docker |
+| `git-clone` | Task | Clone du dépôt Git |
+| `run-tests` | Inline TaskSpec | Tests npm avec sidecar MongoDB |
+| `sonar-scan` | Task | Analyse SonarQube |
+| `kaniko` | Task | Build et push d'image Docker |
+| `trivy-scan` | Inline TaskSpec | Scan de vulnérabilités + notification Discord |
 | `deploy-kubernetes` | Inline TaskSpec | Déploiement via kubectl |
 
 ---
@@ -189,10 +191,16 @@ La pipeline intègre un système de **notification Discord** automatique à l'is
 │   ├── mongodb-deployment.yaml
 │   └── mongodb-service.yaml
 └── tekton/                     # Ressources Tekton (CI/CD)
-    ├── event-listener.yaml
-    ├── trigger-binding.yaml
-    ├── trigger-template.yaml
-    └── rbac.yaml
+    ├── pipeline.yaml           # Pipeline principale (6 étapes)
+    ├── task-git-clone.yaml     # Task : clone du dépôt
+    ├── task-kaniko.yaml        # Task : build & push image Docker
+    ├── task-sonar-scan.yaml    # Task : analyse SonarQube
+    ├── task-deploy-kubernetes.yaml  # Task : déploiement kubectl
+    ├── event-listener.yaml     # EventListener (webhook GitHub)
+    ├── trigger.yaml            # Trigger (lie binding + template)
+    ├── trigger-binding.yaml    # TriggerBinding (extraction params)
+    ├── trigger-template.yaml   # TriggerTemplate (création PipelineRun)
+    └── rbac.yaml               # ServiceAccount & ClusterRoleBinding
 ```
 
 ---

@@ -4,25 +4,6 @@ metadata:
   name: todolist-listener
   namespace: giveaway-ci
 spec:
-  serviceAccountName: tekton-triggers-sa
+  serviceAccountName: tekton-sa
   triggers:
-    - name: github-push
-      interceptors:
-        - ref:
-            name: github
-          params:
-            - name: secretRef
-              value:
-                secretName: github-webhook-secret
-                secretKey: secretToken
-            - name: eventTypes
-              value: [push]
-        - ref:
-            name: cel
-          params:
-            - name: filter
-              value: "body.ref == 'refs/heads/main'"
-      bindings:
-        - ref: todolist-binding
-      template:
-        ref: todolist-template
+    - triggerRef: todolist-trigger

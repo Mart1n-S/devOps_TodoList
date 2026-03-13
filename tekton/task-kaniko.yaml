@@ -1,0 +1,39 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: kaniko
+  namespace: giveaway-ci
+spec:
+  params:
+    - name: IMAGE
+      type: string
+  steps:
+    - computeResources: {}
+      image: alpine
+      name: debug-ls
+      script: |
+        echo "=== LISTE DES FICHIERS DANS LE WORKSPACE ==="
+        echo "Chemin : $(workspaces.source.path)"
+        ls -la $(workspaces.source.path)
+        echo "============================================"
+    - args:
+        - --context=$(workspaces.source.path)
+        - --dockerfile=$(workspaces.source.path)/Dockerfile
+        - --destination=$(params.IMAGE)
+        - --digest-file=$(terminating-log)
+      computeResources: {}
+      image: gcr.io/kaniko-project/executor:latest
+      name: build-and-push
+      volumeMounts:
+        - mountPath: /kaniko/.docker
+          name: docker-conf
+      workingDir: $(workspaces.source.path)
+  volumes:
+    - name: docker-conf
+      secret:
+        items:
+          - key: .dockerconfigjson
+            path: config.json
+        secretName: dockerhub-creds
+  workspaces:
+    - name: source

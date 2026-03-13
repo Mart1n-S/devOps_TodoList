@@ -1,0 +1,26 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: sonar-scan
+  namespace: giveaway-ci
+spec:
+  steps:
+    - computeResources: {}
+      env:
+        - name: SONAR_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: Tekton-Token
+              name: sonar-token
+      image: sonarsource/sonar-scanner-cli:latest
+      name: scanner
+      script: |
+        #!/bin/sh
+        sonar-scanner \
+          -Dsonar.projectKey=todolist-api \
+          -Dsonar.sources=. \
+          -Dsonar.host.url=http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
+          -Dsonar.login=$(SONAR_TOKEN)
+      workingDir: $(workspaces.source.path)
+  workspaces:
+    - name: source

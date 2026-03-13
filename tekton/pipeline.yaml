@@ -1,0 +1,166 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: todolist-pipeline
+  namespace: giveaway-ci
+spec:
+  params:
+    - default: https://github.com/Mart1n-S/devOps_TodoList.git
+      name: repo-url
+      type: string
+    - default: docker.io/thysmadev/todolist-app:latest
+      name: image-name
+      type: string
+  tasks:
+    - name: fetch-repository
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: main
+      taskRef:
+        kind: Task
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-data
+    - name: run-tests
+      runAfter:
+        - fetch-repository
+      taskSpec:
+        sidecars:
+          - computeResources: {}
+            image: mongo:4.4
+            name: mongodb
+            ports:
+              - containerPort: 27017
+        steps:
+          - computeResources: {}
+            image: mongo:4.4
+            name: wait-for-mongo
+            script: |
+              echo "⏳ Attente de MongoDB..."
+              until mongo --host 127.0.0.1 --eval "print('MongoDB prêt')" > /dev/null 2>&1; do
+                sleep 2
+              done
+          - computeResources: {}
+            env:
+              - name: MONGO_URI
+                value: mongodb://127.0.0.1:27017/testdb
+            image: node:20
+            name: npm-test
+            script: |
+              npm ci
+              npm test
+            workingDir: $(workspaces.source.path)
+        workspaces:
+          - name: source
+      workspaces:
+        - name: source
+          workspace: shared-data
+    - name: quality-gate
+      runAfter:
+        - run-tests
+      taskRef:
+        kind: Task
+        name: sonar-scan
+      workspaces:
+        - name: source
+          workspace: shared-data
+    - name: build-and-push
+      params:
+        - name: IMAGE
+          value: $(params.image-name)
+      runAfter:
+        - quality-gate
+      taskRef:
+        kind: Task
+        name: kaniko
+      workspaces:
+        - name: source
+          workspace: shared-data
+    - name: trivy-scan
+      params:
+        - name: IMAGE
+          value: $(params.image-name)
+      runAfter:
+        - build-and-push
+      taskSpec:
+        params:
+          - name: IMAGE
+            type: string
+        steps:
+          - computeResources: {}
+            image: aquasec/trivy:latest
+            name: scan
+            script: |
+              echo "🔍 Scan de sécurité de l'image..."
+              trivy image \
+                --exit-code 0 \
+                --severity HIGH,CRITICAL \
+                --no-progress \
+                --format json \
+                --output /report/trivy-report.json \
+                $(params.IMAGE)
+            volumeMounts:
+              - mountPath: /report
+                name: trivy-report
+          - computeResources: {}
+            env:
+              - name: DISCORD_WEBHOOK_URL
+                valueFrom:
+                  secretKeyRef:
+                    key: url
+                    name: discord-webhook
+            image: curlimages/curl:latest
+            name: notify-discord
+            script: |
+              CRITICAL=$(cat /report/trivy-report.json | grep -o '"Severity":"CRITICAL"' | wc -l)
+              HIGH=$(cat /report/trivy-report.json | grep -o '"Severity":"HIGH"' | wc -l)
+
+              if [ $CRITICAL -gt 0 ]; then COLOR=15158332; EMOJI="🔴";
+              elif [ $HIGH -gt 0 ]; then COLOR=16776960; EMOJI="🟠";
+              else COLOR=3066993; EMOJI="✅"; fi
+
+              curl -X POST "$DISCORD_WEBHOOK_URL" \
+                -H "Content-Type: application/json" \
+                -d "{
+                  \"embeds\": [{
+                    \"title\": \"$EMOJI Rapport Trivy — todolist-app\",
+                    \"color\": $COLOR,
+                    \"fields\": [
+                      {\"name\": \"🔴 CRITICAL\", \"value\": \"$CRITICAL\", \"inline\": true},
+                      {\"name\": \"🟠 HIGH\", \"value\": \"$HIGH\", \"inline\": true},
+                      {\"name\": \"📦 Image\", \"value\": \"$(params.IMAGE)\", \"inline\": false}
+                    ]
+                  }]
+                }"
+            volumeMounts:
+              - mountPath: /report
+                name: trivy-report
+        volumes:
+          - emptyDir: {}
+            name: trivy-report
+    - name: deploy-kubernetes
+      runAfter:
+        - trivy-scan
+      taskSpec:
+        steps:
+          - computeResources: {}
+            image: bitnami/kubectl:latest
+            name: kubectl
+            script: |
+              echo "📦 Application de l'IaC..."
+              kubectl apply -f k8s/ -n giveaway
+              echo "🔄 Forçage du rechargement de l'image..."
+              kubectl rollout restart deployment/todolist-api -n giveaway
+              echo "⏳ Attente du déploiement..."
+              kubectl rollout status deployment/todolist-api -n giveaway
+            workingDir: $(workspaces.source.path)
+        workspaces:
+          - name: source
+      workspaces:
+        - name: source
+          workspace: shared-data
+  workspaces:
+    - name: shared-data

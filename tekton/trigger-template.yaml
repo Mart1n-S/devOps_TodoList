@@ -5,28 +5,24 @@ metadata:
   namespace: giveaway-ci
 spec:
   params:
-    - name: repo-url
-    - name: revision
+    - name: git-repo-url
+    - name: git-revision
   resourcetemplates:
-    - apiVersion: tekton.dev/v1
+    - apiVersion: tekton.dev/v1beta1
       kind: PipelineRun
       metadata:
-        generateName: todolist-pipeline-run-
+        generateName: github-run-
         namespace: giveaway-ci
       spec:
-        pipelineRef:
-          name: todolist-pipeline
         params:
           - name: repo-url
-            value: $(tt.params.repo-url)
-          - name: image-name
-            value: docker.io/thysmadev/todolist-app:latest
+            value: $(tt.params.git-repo-url)
+          - name: revision
+            value: $(tt.params.git-revision)
+        pipelineRef:
+          name: todolist-pipeline
+        serviceAccountName: tekton-sa
         workspaces:
           - name: shared-data
-            volumeClaimTemplate:
-              spec:
-                accessModes:
-                  - ReadWriteOnce
-                resources:
-                  requests:
-                    storage: 1Gi
+            persistentVolumeClaim:
+              claimName: tekton-shared-pvc

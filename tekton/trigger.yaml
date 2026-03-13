@@ -1,0 +1,11 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: Trigger
+metadata:
+  name: todolist-trigger
+  namespace: giveaway-ci
+spec:
+  bindings:
+    - kind: TriggerBinding
+      ref: github-push-binding
+  template:
+    ref: todolist-template

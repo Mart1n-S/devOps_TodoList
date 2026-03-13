@@ -1,0 +1,34 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: deploy-kubernetes
+  namespace: giveaway-ci
+spec:
+  params:
+    - description: L'image complète à déployer
+      name: image-name
+      type: string
+  steps:
+    - args:
+        - set
+        - image
+        - deployment/todolist-api
+        - api=$(params.image-name)
+        - -n
+        - giveaway
+      command:
+        - kubectl
+      computeResources: {}
+      image: bitnami/kubectl:latest
+      name: set-new-image
+    - args:
+        - rollout
+        - status
+        - deployment/todolist-api
+        - -n
+        - giveaway
+      command:
+        - kubectl
+      computeResources: {}
+      image: bitnami/kubectl:latest
+      name: rollout-status
