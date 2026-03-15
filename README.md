@@ -10,6 +10,8 @@ L'objectif de ce projet est la mise en place d'une infrastructure DevOps de bout
 
 L'application TodoList (Node.js / MongoDB) sert de support pour démontrer la mise en œuvre de cette infrastructure.
 
+> Vous pouvez retrouver un document PDF de présentation du projet à la racine du repository.
+
 ---
 
 ## 🏗️ Architecture de l'infrastructure
